@@ -1,0 +1,27 @@
+{
+  "name": "performance-checker",
+  "version": "1.0.0",
+  "description": "Automated static performance analysis for Vue/React frontend projects",
+  "type": "module",
+  "bin": {
+    "perf-check": "./bin/perf-check.js"
+  },
+  "scripts": {
+    "check": "node bin/perf-check.js",
+    "check:bundle": "node bin/perf-check.js --layer bundle",
+    "check:lint": "node bin/perf-check.js --layer lint",
+    "check:deps": "node bin/perf-check.js --layer deps",
+    "report": "node bin/perf-check.js --report",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "glob": "^11.0.0",
+    "ora": "^8.1.1",
+    "table": "^6.8.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

@@ -1,0 +1,3 @@
+node_modules/
+perf-reports/
+*.local

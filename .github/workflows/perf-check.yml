@@ -1,0 +1,102 @@
+name: Performance Check — Qatlam 1 (Statik Analiz)
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+  push:
+    branches: [main, master]
+
+jobs:
+  perf-static:
+    name: Static Performance Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install perf-checker
+        run: npm install -g performance-checker
+        # yoki local: npm install
+
+      - name: Install project dependencies
+        run: npm ci
+        working-directory: ${{ github.workspace }}
+
+      # ─── Lint qatlami ─────────────────────────────────────────────────────
+      - name: Run lint analysis
+        run: perf-check --layer lint --format json --output ./perf-reports
+        working-directory: ${{ github.workspace }}
+
+      # ─── Bundle qatlami ───────────────────────────────────────────────────
+      - name: Build project
+        run: npm run build
+        working-directory: ${{ github.workspace }}
+        continue-on-error: true   # build bo'lmasa ham davom et
+
+      - name: Run bundle analysis
+        run: perf-check --layer bundle --format json --output ./perf-reports
+        working-directory: ${{ github.workspace }}
+
+      # ─── Deps qatlami ─────────────────────────────────────────────────────
+      - name: Run dependency analysis
+        run: perf-check --layer deps --format json --output ./perf-reports
+        working-directory: ${{ github.workspace }}
+
+      # ─── Full report ──────────────────────────────────────────────────────
+      - name: Generate full report
+        run: perf-check --layer all --format html --report --output ./perf-reports
+        working-directory: ${{ github.workspace }}
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-report-${{ github.sha }}
+          path: ./perf-reports/
+          retention-days: 30
+
+      # ─── PR comment ───────────────────────────────────────────────────────
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let report = {};
+            try {
+              report = JSON.parse(fs.readFileSync('./perf-reports/perf-report.json', 'utf8'));
+            } catch { return; }
+
+            const { summary } = report;
+            const status = summary.passed ? '✅ PASSED' : '❌ FAILED';
+            const body = `## ⚡ Performance Check — ${status}
+
+| Qatlam | Topilmalar |
+|--------|-----------|
+| lint   | ${summary.byLayer?.lint || 0} |
+| bundle | ${summary.byLayer?.bundle || 0} |
+| deps   | ${summary.byLayer?.deps || 0} |
+
+**Critical:** ${summary.bySeverity.critical} | **Warning:** ${summary.bySeverity.warning} | **Info:** ${summary.bySeverity.info || 0}
+
+${summary.bySeverity.critical > 0 ? '> ⛔ Critical topilmalar bor — merge qilishdan oldin tuzating!' : ''}
+
+<details><summary>🔥 Ko\'p muammoli fayllar</summary>
+
+${(summary.hotspots || []).slice(0, 5).map(h => `- \`${h.file}\` — ${h.count} muammo`).join('\n')}
+
+</details>`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });
