@@ -1,3 +1,11 @@
 node_modules/
 perf-reports/
+.perf-data/
+.perf-history/
+reports/
+public-ui/
+dist/
 *.local
+.env
+ui/node_modules/
+ui/dist/

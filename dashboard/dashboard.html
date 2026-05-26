@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Performance Dashboard — Qatlam 4</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;color:#0f172a;min-height:100vh}
+.topbar{background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#4c1d95 100%);color:#fff;padding:32px 0}
+.topbar-inner{max-width:1280px;margin:0 auto;padding:0 32px}
+.topbar h1{font-size:26px;font-weight:700;margin-bottom:6px}
+.topbar p{opacity:.7;font-size:14px}
+.container{max-width:1280px;margin:0 auto;padding:24px 32px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px}
+.kpi{background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.05);text-align:center}
+.kpi-num{font-size:36px;font-weight:700;color:#0f172a}
+.kpi-num.red{color:#dc2626}
+.kpi-num.yellow{color:#d97706}
+.kpi-num.green{color:#10b981}
+.kpi-lbl{font-size:12px;color:#64748b;margin-top:6px;text-transform:uppercase;letter-spacing:.05em}
+h2{font-size:18px;font-weight:700;margin:16px 0 16px;color:#0f172a}
+.projects{display:grid;gap:20px}
+.project-card{background:#fff;border-radius:14px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.06);border-left:4px solid #e2e8f0;transition:transform .15s}
+.project-card:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.project-card.regression{border-left-color:#dc2626;background:linear-gradient(to right,#fef2f2,#fff 80px)}
+.proj-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.proj-header h3{font-size:18px;font-weight:700;margin-bottom:4px}
+.proj-meta{font-size:12px;color:#64748b}
+.regression-badge{background:#dc2626;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;margin-left:8px}
+.score-circle{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;flex-shrink:0}
+.score-good{background:#10b981}
+.score-avg{background:#d97706}
+.score-bad{background:#dc2626}
+.score-na{background:#94a3b8}
+.proj-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px}
+.metric{background:#f8fafc;border-radius:10px;padding:10px;text-align:center}
+.m-lbl{display:block;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.m-val{display:block;font-size:16px;font-weight:600;color:#0f172a}
+.red-text{color:#dc2626}
+.yellow-text{color:#d97706}
+.trends{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:14px}
+.chart{background:#fafafa;border-radius:10px;padding:10px}
+.chart-title{font-size:12px;color:#64748b;font-weight:600;display:flex;justify-content:space-between;margin-bottom:4px}
+.chart-last{color:#0f172a;font-size:13px}
+.chart svg{display:block;width:100%;height:80px}
+.no-data{font-size:12px;color:#94a3b8;padding:20px;text-align:center}
+.findings-details{margin-top:8px}
+.findings-details summary{cursor:pointer;padding:8px 12px;background:#f8fafc;border-radius:8px;font-size:13px;color:#475569;user-select:none}
+.findings-details summary:hover{background:#f1f5f9}
+.findings-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;table-layout:fixed}
+.findings-table th{background:#f8fafc;padding:8px 10px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.04em}
+.findings-table td{padding:8px 10px;border-bottom:1px solid #f1f5f9;vertical-align:top;word-wrap:break-word;overflow-wrap:anywhere}
+.findings-table th:nth-child(1),.findings-table td:nth-child(1){width:80px}
+.findings-table th:nth-child(2),.findings-table td:nth-child(2){width:160px}
+.findings-table th:nth-child(3),.findings-table td:nth-child(3){width:220px}
+.sev-pill{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;color:#fff;text-transform:uppercase}
+.sev-pill.sev-c{background:#dc2626}
+.sev-pill.sev-w{background:#d97706}
+.sev-pill.sev-i{background:#2563eb}
+code{font-family:'Fira Code',Consolas,monospace;font-size:11px;background:#f3f4f6;padding:1px 5px;border-radius:3px;color:#7c3aed}
+code.loc{color:#0891b2}
+@media(max-width:640px){.container{padding:16px}.proj-metrics{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <h1>⚡ Performance Dashboard</h1>
+      <p>2 ta loyiha • Yangilangan: 26/05/2026, 10:15:20</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="kpi-grid">
+      <div class="kpi"><div class="kpi-num">2</div><div class="kpi-lbl">Loyihalar</div></div>
+      <div class="kpi"><div class="kpi-num red">188</div><div class="kpi-lbl">Critical findings</div></div>
+      <div class="kpi"><div class="kpi-num yellow">821</div><div class="kpi-lbl">Warning findings</div></div>
+      <div class="kpi"><div class="kpi-num green">0</div><div class="kpi-lbl">Regressionlar</div></div>
+    </section>
+
+    <h2>Loyihalar reytingi (Lighthouse score bo'yicha)</h2>
+    <div class="projects">
+      
+  <div class="project-card" data-project="Imp-App">
+    <header class="proj-header">
+      <div>
+        <h3>Imp-App</h3>
+        <p class="proj-meta">
+          vue3 / vite •
+          1 ta snapshot •
+          oxirgi: 26/05/2026, 10:15:20
+          
+        </p>
+      </div>
+      <div class="score-circle score-na">N/A</div>
+    </header>
+
+    <div class="proj-metrics">
+      <div class="metric"><span class="m-lbl">LCP</span><span class="m-val">N/A</span></div>
+      <div class="metric"><span class="m-lbl">CLS</span><span class="m-val">N/A</span></div>
+      <div class="metric"><span class="m-lbl">INP</span><span class="m-val">N/A</span></div>
+      <div class="metric"><span class="m-lbl">FCP</span><span class="m-val">N/A</span></div>
+      <div class="metric"><span class="m-lbl">Bundle JS</span><span class="m-val">2.6 MB</span></div>
+      <div class="metric"><span class="m-lbl">Critical</span><span class="m-val red-text">159</span></div>
+      <div class="metric"><span class="m-lbl">Warning</span><span class="m-val yellow-text">530</span></div>
+    </div>
+
+    <div class="trends">
+  <div class="chart">
+    <div class="chart-title">Critical findings <span class="chart-last">159</span></div>
+    <svg viewBox="0 0 280 80" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <path d="M8.0,13.8" fill="none" stroke="#dc2626" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="8.0" cy="13.8" r="2" fill="#dc2626"/>
+    </svg>
+  </div></div>
+
+    <details class="findings-details">
+      <summary>📋 732 ta finding'ni ko'rsatish</summary>
+      
+  <table class="findings-table">
+    <thead><tr><th>Severity</th><th>Rule</th><th>Joy</th><th>Xabar</th></tr></thead>
+    <tbody><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\TranslateItems.vue:163</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\TranslateItems.vue:170</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\LastTabs.vue:156</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\BaseBreadcrumb.vue:24</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\AppError.vue:173</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\report\ReportSummary.vue:72</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\report\LongRangeOperation.vue:240</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Applications\edit.vue:77</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\Feature\Map\Map.vue:143</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\Period\SelectList.vue:196</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\PhoneNumberWithMobileCode.vue:107</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormTabRow.vue:38</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormTabRow.vue:45</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormTabRow.vue:54</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormTabRow.vue:55</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormTabRow.vue:68</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormTabRow.vue:76</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/no-v-if-v-for-same-element</code></td>
+      <td><code class="loc">src\components\form\FormTabRow.vue:65</code></td>
+      <td>`v-for` va `v-if` bir elementda — har render'da butun list filter qilinadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormTable.vue:174</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormTable.vue:216</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormPhoneNumber.vue:99</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormInput.vue:206</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormInput.vue:226</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FileUpload.vue:109</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\singleReestr\survey\edit.vue:441</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\singleReestr\survey\edit.vue:472</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\TiekSport\TiekSurvey\view.vue:172</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\TiekSport\TiekSurvey\edit.vue:150</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\singleReestrRejected\survey\edit.vue:424</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\singleReestrRejected\survey\edit.vue:455</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Scooter\Survey\ViewQuestions.vue:292</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Scooter\Survey\ViewQuestions.vue:305</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Scooter\Survey\SurveyEdit.vue:518</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Scooter\Survey\SurveyEdit.vue:553</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Scooter\ScooterSurvey\view.vue:172</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Scooter\ScooterSurvey\edit.vue:150</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\info\SurveyResultAlgorithm\view.vue:66</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\info\SurveyResultAlgorithm\edit.vue:99</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\IndividualPlan\familyIndividualPlan\view.vue:161</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\entrepreneur\Entrepreneur\view.vue:76</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\managment\role\edit.vue:104</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\managment\role\edit.vue:110</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\document\Survey\ViewQuestions.vue:292</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\document\Survey\ViewQuestions.vue:305</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\document\Survey\SurveyEdit.vue:637</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\document\Survey\SurveyEdit.vue:673</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\document\Reestr\view.vue:161</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\dash\widgets\DashTable.vue:262</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\dash\widgets\DashTable.vue:286</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\dash\widgets\DashTable.vue:301</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\dash\components\PointerMap.vue:102</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\dash\components\DashCard.vue:209</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\AdaptivSport\TiekSurvey\view.vue:172</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\AdaptivSport\TiekSurvey\edit.vue:150</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Applications\Steps\ThirdStep.vue:27</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Applications\Steps\ThirdStep.vue:33</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Applications\Steps\SecondStep.vue:163</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Applications\Steps\SecondStep.vue:173</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Applications\Steps\SecondStep.vue:183</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\singleReestr\survey\widgets\AdditionalFamily.vue:74</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\singleReestrRejected\survey\widgets\AdditionalFamily.vue:74</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Scooter\Survey\widgets\SxkSkorintResult.vue:27</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Scooter\Survey\widgets\ScoringResult.vue:29</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Scooter\Survey\widgets\ScoringResult.vue:34</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Scooter\Survey\widgets\ModelsInfo.vue:129</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Scooter\Survey\widgets\ModelsInfo.vue:134</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Scooter\Survey\widgets\ModelsInfo.vue:135</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Scooter\Survey\widgets\InvSurveyApprove.vue:26</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Scooter\Survey\widgets\ApproveDecisionReasons.vue:23</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\Scooter\Survey\widgets\AdditionalFamily.vue:74</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\info\Questionnaire\widgets\QuestionnaireQuestions.vue:289</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\info\Questionnaire\widgets\QuestionnaireQuestions.vue:379</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\info\Questionnaire\widgets\QuestionnaireQuestions.vue:586</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\info\Questionnaire\widgets\QuestionnaireGroup.vue:22</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\info\Questionnaire\widgets\QuestionnaireGroup.vue:91</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\info\Questionnaire\widgets\QuestionInput.vue:168</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\info\Questionnaire\widgets\QuestionInput.vue:170</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\info\Questionnaire\widgets\QuestionInput.vue:173</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\info\Questionnaire\widgets\QuestionInput.vue:209</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\info\Questionnaire\widgets\QuestionInput.vue:211</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\info\Questionnaire\widgets\QuestionInput.vue:214</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\info\Questionnaire\widgets\QuestionInput.vue:241</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\info\Questionnaire\widgets\QuestionInput.vue:248</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/no-v-if-v-for-same-element</code></td>
+      <td><code class="loc">src\views\info\Questionnaire\widgets\QuestionInput.vue:170</code></td>
+      <td>`v-for` va `v-if` bir elementda — har render'da butun list filter qilinadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/no-v-if-v-for-same-element</code></td>
+      <td><code class="loc">src\views\info\Questionnaire\widgets\QuestionInput.vue:173</code></td>
+      <td>`v-for` va `v-if` bir elementda — har render'da butun list filter qilinadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/no-v-if-v-for-same-element</code></td>
+      <td><code class="loc">src\views\info\Questionnaire\widgets\QuestionInput.vue:211</code></td>
+      <td>`v-for` va `v-if` bir elementda — har render'da butun list filter qilinadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/no-v-if-v-for-same-element</code></td>
+      <td><code class="loc">src\views\info\Questionnaire\widgets\QuestionInput.vue:214</code></td>
+      <td>`v-for` va `v-if` bir elementda — har render'da butun list filter qilinadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\info\Questionnaire\widgets\Algorithms.vue:70</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\monitoring\GetInformationAboutFamiliesInPoverty\widgets\GetPersonMonitoringResult.vue:60</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\monitoring\GetInformationAboutFamiliesInPoverty\widgets\GetPersonMonitoringResult.vue:79</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\monitoring\GetInformationAboutFamiliesInPoverty\widgets\GetPersonMonitoringResult.vue:87</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\monitoring\GetInformationAboutFamiliesInPoverty\widgets\GetInformationAboutFamiliesInPoverty.vue:77</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\monitoring\GetInformationAboutFamiliesInPoverty\widgets\GetInformationAboutFamiliesInPoverty.vue:98</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\monitoring\GetInformationAboutFamiliesInPoverty\widgets\GetFamilyMonitoringComparison.vue:88</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\entrepreneur\Entrepreneur\components\Address.vue:21</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\document\Survey\widgets\SxkSkorintResult.vue:27</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\document\Survey\widgets\ScoringResult.vue:29</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\document\Survey\widgets\ScoringResult.vue:34</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\document\Survey\widgets\ModelsInfo.vue:129</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\document\Survey\widgets\ModelsInfo.vue:134</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr></tbody>
+  </table>
+    </details>
+  </div>
+
+  <div class="project-card" data-project="Education-App">
+    <header class="proj-header">
+      <div>
+        <h3>Education-App</h3>
+        <p class="proj-meta">
+          vue3 / vite •
+          1 ta snapshot •
+          oxirgi: 26/05/2026, 10:15:19
+          
+        </p>
+      </div>
+      <div class="score-circle score-na">N/A</div>
+    </header>
+
+    <div class="proj-metrics">
+      <div class="metric"><span class="m-lbl">LCP</span><span class="m-val">N/A</span></div>
+      <div class="metric"><span class="m-lbl">CLS</span><span class="m-val">N/A</span></div>
+      <div class="metric"><span class="m-lbl">INP</span><span class="m-val">N/A</span></div>
+      <div class="metric"><span class="m-lbl">FCP</span><span class="m-val">N/A</span></div>
+      <div class="metric"><span class="m-lbl">Bundle JS</span><span class="m-val">5.6 MB</span></div>
+      <div class="metric"><span class="m-lbl">Critical</span><span class="m-val red-text">29</span></div>
+      <div class="metric"><span class="m-lbl">Warning</span><span class="m-val yellow-text">291</span></div>
+    </div>
+
+    <div class="trends">
+  <div class="chart">
+    <div class="chart-title">Critical findings <span class="chart-last">29</span></div>
+    <svg viewBox="0 0 280 80" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <path d="M8.0,13.8" fill="none" stroke="#dc2626" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="8.0" cy="13.8" r="2" fill="#dc2626"/>
+    </svg>
+  </div></div>
+
+    <details class="findings-details">
+      <summary>📋 378 ta finding'ni ko'rsatish</summary>
+      
+  <table class="findings-table">
+    <thead><tr><th>Severity</th><th>Rule</th><th>Joy</th><th>Xabar</th></tr></thead>
+    <tbody><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\TranslateItems.vue:152</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\TranslateItems.vue:159</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\LastTabs.vue:141</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\FileAttach.vue:142</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/no-v-if-v-for-same-element</code></td>
+      <td><code class="loc">src\components\FileAttach.vue:141</code></td>
+      <td>`v-for` va `v-if` bir elementda — har render'da butun list filter qilinadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\AppError.vue:173</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\map\components\MapComponent.vue:182</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\vSearchPerson\VSearchPerson.vue:179</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\Period\SelectList.vue:196</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormTabRow.vue:37</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormTabRow.vue:44</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormTabRow.vue:53</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormTabRow.vue:54</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormTabRow.vue:67</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormTabRow.vue:75</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/no-v-if-v-for-same-element</code></td>
+      <td><code class="loc">src\components\form\FormTabRow.vue:64</code></td>
+      <td>`v-for` va `v-if` bir elementda — har render'da butun list filter qilinadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormTable.vue:169</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormTable.vue:213</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormPhoneNumber.vue:106</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormInput.vue:121</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FormInput.vue:141</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\components\form\FileUpload.vue:111</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\info\Icd10List\NbsListGroup.vue:155</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\views\document\User\widgets\UsersInfo.vue:308</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\app\config\layouts\vertical-sidebar\VerticalSidebar.vue:66</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\app\config\layouts\vertical-header\LanguageDD.vue:47</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/v-for-no-key</code></td>
+      <td><code class="loc">src\app\config\layouts\vertical-sidebar\NavCollapse\NavCollapse.vue:28</code></td>
+      <td>`v-for` da `:key` yo'q — DOM diffing sekinlashadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>vue/no-v-if-v-for-same-element</code></td>
+      <td><code class="loc">src\app\config\layouts\vertical-sidebar\NavCollapse\NavCollapse.vue:28</code></td>
+      <td>`v-for` va `v-if` bir elementda — har render'da butun list filter qilinadi.</td>
+    </tr><tr class="sev-c">
+      <td><span class="sev-pill sev-c">critical</span></td>
+      <td><code>bundle/js-size-over-budget</code></td>
+      <td><code class="loc">dist:1</code></td>
+      <td>Umumiy JS hajmi 5.6MB — budget 500KB dan oshdi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-complex-expression-in-template</code></td>
+      <td><code class="loc">src\map\Map.vue:150</code></td>
+      <td>Template ifodasi murakkab (`cardData?.allDisabled || 0...`) — har render'da qayta hisoblanadi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>common/uncleared-timer</code></td>
+      <td><code class="loc">src\map\Map.vue:191</code></td>
+      <td>setTimeout/setInterval tozalanmagan — memory leak xavfi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\EnhancedMap.vue:15</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\EnhancedMap.vue:16</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\EnhancedMap.vue:45</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-complex-expression-in-template</code></td>
+      <td><code class="loc">src\map\EnhancedMap.vue:36</code></td>
+      <td>Template ifodasi murakkab (`$t(selectedPath?.title)...`) — har render'da qayta hisoblanadi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\components\VCustomExpansionPanel.vue:95</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\components\VCustomExpansionPanel.vue:104</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>common/uncleared-timer</code></td>
+      <td><code class="loc">src\components\VCustomExpansionPanel.vue:39</code></td>
+      <td>setTimeout/setInterval tozalanmagan — memory leak xavfi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>common/uncleared-timer</code></td>
+      <td><code class="loc">src\components\VCustomExpansionPanel.vue:50</code></td>
+      <td>setTimeout/setInterval tozalanmagan — memory leak xavfi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\components\UserInfo.vue:90</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\components\UserInfo.vue:101</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\components\ProgressBar.vue:16</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\components\Pagination.vue:55</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-complex-expression-in-template</code></td>
+      <td><code class="loc">src\components\Pagination.vue:60</code></td>
+      <td>Template ifodasi murakkab (`$t(&quot;RecordsFrom&quot;, {
+              curre...`) — har render'da qayta hisoblanadi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>common/uncleared-timer</code></td>
+      <td><code class="loc">src\components\LastTabs.vue:87</code></td>
+      <td>setTimeout/setInterval tozalanmagan — memory leak xavfi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\components\CustomTabs.vue:68</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\components\CustomNotification.vue:76</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\components\CustomNotification.vue:89</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\components\customNewListItem.vue:21</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-complex-expression-in-template</code></td>
+      <td><code class="loc">src\components\customNewListItem.vue:25</code></td>
+      <td>Template ifodasi murakkab (`isShort ? label.slice(0, 60) + (label.le...`) — har render'da qayta hisoblanadi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-complex-expression-in-template</code></td>
+      <td><code class="loc">src\components\customListItem.vue:25</code></td>
+      <td>Template ifodasi murakkab (`isShort ? label.slice(0, 60) + (label.le...`) — har render'da qayta hisoblanadi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\components\BaseBreadcrumb.vue:25</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\components\BaseBreadcrumb.vue:30</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-complex-expression-in-template</code></td>
+      <td><code class="loc">src\components\BaseBreadcrumb.vue:28</code></td>
+      <td>Template ifodasi murakkab (`$t(item?.title)...`) — har render'da qayta hisoblanadi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-complex-expression-in-template</code></td>
+      <td><code class="loc">src\components\BaseBreadcrumb.vue:33</code></td>
+      <td>Template ifodasi murakkab (`$t(item?.title)...`) — har render'da qayta hisoblanadi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\components\Accardion.vue:43</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\components\Accardion.vue:48</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\components\Accardion.vue:49</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-complex-expression-in-template</code></td>
+      <td><code class="loc">src\map\components\MapPersonCard.vue:20</code></td>
+      <td>Template ifodasi murakkab (`row.name ?? row.fullName...`) — har render'da qayta hisoblanadi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Samarqand.vue:25</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Samarqand.vue:41</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Samarqand.vue:57</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Samarqand.vue:73</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Samarqand.vue:88</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Samarqand.vue:103</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Samarqand.vue:119</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Samarqand.vue:135</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Samarqand.vue:151</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Samarqand.vue:167</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Samarqand.vue:183</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Samarqand.vue:199</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Samarqand.vue:215</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Samarqand.vue:231</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Samarqand.vue:247</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Samarqand.vue:263</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Samarqand.vue:279</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Qashqadaryo.vue:25</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Qashqadaryo.vue:41</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Qashqadaryo.vue:59</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Qashqadaryo.vue:75</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Qashqadaryo.vue:91</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Qashqadaryo.vue:107</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Qashqadaryo.vue:122</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Qashqadaryo.vue:138</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Qashqadaryo.vue:153</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Qashqadaryo.vue:168</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Qashqadaryo.vue:184</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Qashqadaryo.vue:200</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Qashqadaryo.vue:216</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Qashqadaryo.vue:232</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Qashqadaryo.vue:248</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Qashqadaryo.vue:264</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\map\assets\Qashqadaryo.vue:280</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\components\vSearchPerson\UserInfo.vue:49</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\components\vSearchPerson\UserInfo.vue:60</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-complex-expression-in-template</code></td>
+      <td><code class="loc">src\components\vSearchPerson\UserInfo.vue:134</code></td>
+      <td>Template ifodasi murakkab (`person?.positionInfo?.position || person...`) — har render'da qayta hisoblanadi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-complex-expression-in-template</code></td>
+      <td><code class="loc">src\components\vSearchPerson\UserInfo.vue:141</code></td>
+      <td>Template ifodasi murakkab (`person.pension?.pensionType || $t(&quot;passp...`) — har render'da qayta hisoblanadi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-complex-expression-in-template</code></td>
+      <td><code class="loc">src\components\vSearchPerson\UserInfo.vue:148</code></td>
+      <td>Template ifodasi murakkab (`parseNumber(person.pension?.amount || 0)...`) — har render'da qayta hisoblanadi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>common/uncleared-timer</code></td>
+      <td><code class="loc">src\components\Period\SelectorPicker.vue:353</code></td>
+      <td>setTimeout/setInterval tozalanmagan — memory leak xavfi.</td>
+    </tr><tr class="sev-w">
+      <td><span class="sev-pill sev-w">warning</span></td>
+      <td><code>vue/no-inline-object-in-template</code></td>
+      <td><code class="loc">src\components\Period\SelectList.vue:146</code></td>
+      <td>Template ichida inline object/array — har render'da yangi reference yaratiladi.</td>
+    </tr></tbody>
+  </table>
+    </details>
+  </div>
+    </div>
+  </main>
+
+  <script>
+// Reserved for future interactive filters
+</script>
+</body>
+</html>

@@ -1,35 +1,37 @@
 /**
- * Config loader — perf.config.js yoki CLI argumentlardan config yuklab beradi
+ * Config loader — perf.config.js yoki CLI argumentlardan config yuklab beradi.
+ * zod schema bilan validatsiya qilinadi.
  */
 import { existsSync } from 'fs';
 import { resolve } from 'path';
 import { pathToFileURL } from 'url';
 import { detectFramework } from '../utils/detect.js';
+import { logger } from '../utils/logger.js';
+import { DEFAULT_BUDGET } from '../constants.js';
+import { validatePerfConfig } from './schema.js';
 
-export const DEFAULT_BUDGET = {
-  bundleSize: {
-    totalJS: 500 * 1024,      // 500KB
-    totalCSS: 100 * 1024,     // 100KB
-    initialJS: 200 * 1024,    // 200KB — initial chunk
-  },
-  lighthouse: {
-    performance: 75,
-    accessibility: 90,
-    bestPractices: 85,
-  },
-  findings: {
-    critical: 0,               // CI'da 0 critical bo'lishi shart
-    warning: 10,
-  },
-};
+export { DEFAULT_BUDGET };
 
 export async function loadProjectConfig(opts = {}) {
   let userConfig = {};
 
   const configPath = resolve(opts.config || './perf.config.js');
   if (existsSync(configPath)) {
-    const mod = await import(pathToFileURL(configPath).href);
-    userConfig = mod.default || mod;
+    try {
+      const mod = await import(pathToFileURL(configPath).href);
+      userConfig = mod.default || mod;
+    } catch (err) {
+      throw new Error(`perf.config.js yuklanmadi: ${err.message}\n  Faylni JS ESM eksport ekanligini tekshiring.`);
+    }
+  }
+
+  // Schema validatsiyasi (faqat user config — defaults har doim valid)
+  if (Object.keys(userConfig).length > 0) {
+    const v = validatePerfConfig(userConfig);
+    if (!v.ok) {
+      throw new Error(v.error);
+    }
+    userConfig = v.data;
   }
 
   const projectPath = resolve(opts.project || userConfig.project || '.');
@@ -39,14 +41,32 @@ export async function loadProjectConfig(opts = {}) {
     ? ['lint', 'bundle', 'deps']
     : opts.layer.split(',').map(s => s.trim());
 
+  if (opts.verbose) logger.setVerbose(true);
+
   return {
     projectPath,
     framework,
     layers,
     format: opts.format || userConfig.format || 'console',
     outputDir: resolve(opts.output || userConfig.outputDir || './perf-reports'),
-    budget: { ...DEFAULT_BUDGET, ...(userConfig.budget || {}) },
+    budget: deepMerge(DEFAULT_BUDGET, userConfig.budget || {}),
     report: opts.report || false,
-    ...userConfig,
+    ignore: userConfig.ignore || [],
+    rules: userConfig.rules || {},
+    verbose: !!opts.verbose,
   };
+}
+
+function deepMerge(base, override) {
+  if (!override || typeof override !== 'object') return base;
+  const out = { ...base };
+  for (const k of Object.keys(override)) {
+    const v = override[k];
+    if (v && typeof v === 'object' && !Array.isArray(v) && base[k] && typeof base[k] === 'object') {
+      out[k] = deepMerge(base[k], v);
+    } else if (v !== undefined) {
+      out[k] = v;
+    }
+  }
+  return out;
 }

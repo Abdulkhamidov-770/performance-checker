@@ -6,7 +6,7 @@
 import { runLintAnalysis } from './lint/index.js';
 import { runBundleAnalysis } from './bundle/index.js';
 import { runDepsAnalysis } from './deps/index.js';
-import { isVue, isReact } from '../utils/detect.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * @param {Object} config - loadProjectConfig dan kelgan config
@@ -26,21 +26,21 @@ export async function runStaticAnalysis(config) {
   const layerResults = {};
 
   if (layers.includes('lint')) {
-    console.log('\n🔍  Lint analiz...');
+    logger.info('\n🔍  Lint analiz...');
     const lintResult = await runLintAnalysis({ projectPath, framework });
     allFindings = allFindings.concat(lintResult.findings);
     layerResults.lint = lintResult;
   }
 
   if (layers.includes('bundle')) {
-    console.log('\n📦  Bundle analiz...');
+    logger.info('\n📦  Bundle analiz...');
     const bundleResult = await runBundleAnalysis({ projectPath, framework, budget });
     allFindings = allFindings.concat(bundleResult.findings);
     layerResults.bundle = bundleResult;
   }
 
   if (layers.includes('deps')) {
-    console.log('\n🔗  Dependency analiz...');
+    logger.info('\n🔗  Dependency analiz...');
     const depsResult = await runDepsAnalysis({ projectPath, framework });
     allFindings = allFindings.concat(depsResult.findings);
     layerResults.deps = depsResult;
